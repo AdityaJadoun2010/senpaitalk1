@@ -1,0 +1,111 @@
+'use client';
+import React, { useState } from 'react';
+import { Menu, X, Send, Bot, User, Search } from 'lucide-react';
+import Image from 'next/image';
+
+const characters = [
+  { name: 'Gojo Satoru', image: '/images/gojo.jpg', prompt: "I'm the strongest!" },
+  { name: 'Levi Ackerman', image: '/images/levi.jpg', prompt: 'Cleanliness is next to godliness.' },
+  { name: 'Luffy', image: '/images/luffy.jpg', prompt: 'Meat!! And becoming the Pirate King!' },
+  { name: 'Sukuna', image: '/images/sukuna.jpg', prompt: 'Bow before me, insect.' },
+  { name: 'Hinata Shoyo', image: '/images/hinata.jpg', prompt: 'I jump because I want to fly!' },
+];
+
+export default function HomePage() {
+  const [selectedCharacter, setSelectedCharacter] = useState(null);
+  const [input, setInput] = useState('');
+  const [chat, setChat] = useState([]);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState(''); // 🔧 for search
+
+  const handleSend = () => {
+    if (!input || !selectedCharacter) return;
+    const userMsg = { role: 'user', content: input };
+    const aiMsg = { role: 'ai', content: `(${selectedCharacter.name}): ${selectedCharacter.prompt}` };
+    setChat((prev) => [...prev, userMsg, aiMsg]);
+    setInput('');
+  };
+
+  const filteredCharacters = characters.filter((char) =>
+    char.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div className="flex min-h-screen bg-gray-100">
+      {/* Sidebar */}
+      <div className={`fixed inset-y-0 left-0 z-20 w-64 bg-white shadow-md transition-transform transform ${menuOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0`}>
+        <div className="flex items-center justify-between p-4 border-b">
+          <h2 className="text-xl font-bold text-blue-600">SenpaiTalk</h2>
+          <button className="md:hidden" onClick={() => setMenuOpen(false)}><X /></button>
+        </div>
+
+        {/* 🔧 Search bar */}
+        <div className="px-4 py-2">
+          <div className="flex items-center gap-2 border rounded px-2">
+            <Search size={16} className="text-gray-500" />
+            <input
+              type="text"
+              placeholder="Search character..."
+              className="w-full p-1 outline-none"
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="p-4 space-y-4 overflow-y-auto h-full">
+          {filteredCharacters.map((char) => (
+            <div
+              key={char.name}
+              onClick={() => { setSelectedCharacter(char); setChat([]); setMenuOpen(false); }}
+              className={`flex items-center space-x-2 p-2 cursor-pointer hover:bg-gray-100 rounded ${selectedCharacter?.name === char.name ? 'bg-blue-100' : ''}`}
+            >
+              <Image src={char.image} alt={char.name} width={40} height={40} className="rounded-full" />
+              <span>{char.name}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Main Chat Content */}
+      <div className="flex-1 flex flex-col">
+        {/* Topbar for mobile */}
+        <div className="flex items-center justify-between p-4 border-b md:hidden bg-white">
+          <button onClick={() => setMenuOpen(true)}><Menu /></button>
+          <h2 className="text-lg font-semibold">{selectedCharacter?.name || 'Choose a Character'}</h2>
+        </div>
+
+        {/* Chat Area */}
+        <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
+          <div className="max-w-2xl mx-auto space-y-3">
+            {chat.map((msg, i) => (
+              <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`p-3 rounded-lg max-w-xs md:max-w-md text-sm shadow ${msg.role === 'user' ? 'bg-blue-500 text-white' : 'bg-white border'}`}>
+                  <div className="flex items-start gap-2">
+                    {msg.role === 'user' ? <User size={14} /> : <Bot size={14} />}
+                    <span>{msg.content}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Chat Input */}
+        {selectedCharacter && (
+          <div className="p-4 border-t bg-white flex items-center gap-2 sticky bottom-0">
+            <input
+              type="text"
+              placeholder="Say something..."
+              className="flex-1 p-2 border rounded shadow-sm"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+            />
+            <button onClick={handleSend} className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+              <Send size={18} />
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
